@@ -1,28 +1,93 @@
 #include <stdint.h>
 
+#include "fs/fs.h"
+#include "fs/vfs.h"
 #include "io.h"
+
+#include "lib/cmd.h"
+#include "lib/string.h"
 
 #define VERSION_MAJOR 0
 #define VERSION_MINOR 0
 #define VERSION_PATCH 1
 
+static void cmd_ls(const char *path) {
+  unsigned int i = 0;
+  char name[32];
+  enum vnode_type type;
+
+  while (vfs_readdir(path, i, name, sizeof(name), &type) == 0) {
+    put_string(name);
+    if (type == VNODE_DIR) {
+      uart_putc('/');
+    }
+    uart_putc('\r');
+    uart_putc('\n');
+    i++;
+  }
+}
+
+static void handle_command(char *cmd) {
+  char *argv[4];
+  int argc = parse_command(cmd, argv, 4);
+
+  if (strcmp(argv[0], "echo") == 0) {
+    put_string("");
+    uart_putc('\r');
+    uart_putc('\n');
+  } else if (strcmp(argv[0], "mkdir") == 0) {
+    if (argc != 2) {
+      put_string("usage: mkdir <directory_name>\r\n");
+      return;
+    }
+
+    int s = vfs_create(argv[1], VNODE_DIR);
+    kprintf("Created path %s with status %d\r\n", argv[1], s);
+  } else if (strcmp(argv[0], "ls") == 0) {
+    cmd_ls("/");
+  } else {
+    put_string("os: command not found: ");
+    uart_putc('\"');
+    put_string(argv[0]);
+    uart_putc('\"');
+    uart_putc('\r');
+    uart_putc('\n');
+  }
+}
+
 void kernel_main(void) {
+  struct file *f;
+  char buf[16];
+  int n;
+
   uart_init();
   kprintf("OS version %d.%d.%d\r\n", VERSION_MAJOR, VERSION_MINOR,
           VERSION_PATCH);
-  kprintf("Hejsan\r\n");
+
+  vfs_init();
+  if (vfs_create("/test.txt", VNODE_FILE) == 0 &&
+      vfs_open("/test.txt", 0, &f) == 0) {
+    vfs_write(f, "hej", 3);
+    f->offset = 0;
+    n = vfs_read(f, buf, 3);
+    if (n >= 0) {
+      buf[n] = '\0';
+      put_string("ramfs: ");
+      put_string(buf);
+      uart_putc('\r');
+      uart_putc('\n');
+    }
+    vfs_close(f);
+  }
 
   char line[128];
 
   while (1) {
-    put_string("> ");
+    put_string("os> ");
 
     get_line(line);
     uart_putc('\r');
 
-    put_string("Du skrev: ");
-    put_string(line);
-    uart_putc('\r');
-    uart_putc('\n');
+    handle_command(line);
   }
 }

@@ -140,7 +140,11 @@ void kprintf(const char *fmt, ...) {
         put_int(d);
         break;
       }
-
+      case 's': {
+        char *s = va_arg(args, char *);
+        put_string(s);
+        break;
+      }
       case '%':
         uart_putc('%');
         break;
