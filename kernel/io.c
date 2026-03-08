@@ -98,6 +98,16 @@ void put_string(const char *s) {
   }
 }
 
+void put_hex64(uint64_t val) {
+  static const char digits[] = "0123456789abcdef";
+
+  put_string("0x");
+
+  for (int shift = 60; shift >= 0; shift -= 4) {
+    uart_putc(digits[(val >> shift) & 0xf]);
+  }
+}
+
 void put_int(int val) {
   char buf[16];
   int i = 0;

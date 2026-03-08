@@ -2,6 +2,7 @@
 
 #include "fs/fs.h"
 #include "fs/vfs.h"
+#include "interrupts.h"
 #include "io.h"
 
 #include "lib/cmd.h"
@@ -56,29 +57,14 @@ static void handle_command(char *cmd) {
 }
 
 void kernel_main(void) {
-  struct file *f;
-  char buf[16];
-  int n;
-
   uart_init();
-  kprintf("OS version %d.%d.%d\r\n", VERSION_MAJOR, VERSION_MINOR,
+
+  irq_disable();
+
+  kprintf("Booting OS version %d.%d.%d...\r\n", VERSION_MAJOR, VERSION_MINOR,
           VERSION_PATCH);
 
-  vfs_init();
-  if (vfs_create("/test.txt", VNODE_FILE) == 0 &&
-      vfs_open("/test.txt", 0, &f) == 0) {
-    vfs_write(f, "hej", 3);
-    f->offset = 0;
-    n = vfs_read(f, buf, 3);
-    if (n >= 0) {
-      buf[n] = '\0';
-      put_string("ramfs: ");
-      put_string(buf);
-      uart_putc('\r');
-      uart_putc('\n');
-    }
-    vfs_close(f);
-  }
+  irq_enable();
 
   char line[128];
 

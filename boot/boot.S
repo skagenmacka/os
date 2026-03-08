@@ -9,6 +9,9 @@ _start:
 
   ldr x0, =stack_top
   mov sp, x0
+  ldr x0, =exception_vectors
+  msr vbar_el1, x0
+  isb
   bl kernel_main
 
 1:
