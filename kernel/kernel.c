@@ -5,6 +5,7 @@
 #include "fs/vfs.h"
 #include "interrupts.h"
 #include "io.h"
+#include "kalloc.h"
 #include "timer.h"
 
 #include "lib/cmd.h"
@@ -58,13 +59,22 @@ static void handle_command(char *cmd) {
     put_string("ticks: ");
     put_hex64(timer_get_ticks());
     put_string("\r\n");
+  } else if (strcmp(argv[0], "test") == 0) {
+    void *p1 = kalloc();
+    void *p2 = kalloc();
+
+    put_string("p1: ");
+    put_hex64((uint64_t)p1);
+    put_string("\r\n");
+
+    put_string("p2: ");
+    put_hex64((uint64_t)p1);
+    put_string("\r\n");
+
+    kfree(p1);
+    kfree(p2);
   } else {
-    put_string("os: command not found: ");
-    uart_putc('\"');
-    put_string(argv[0]);
-    uart_putc('\"');
-    uart_putc('\r');
-    uart_putc('\n');
+    kprintf("os: command not found: '%s'\r\n", argv[0]);
   }
 }
 
