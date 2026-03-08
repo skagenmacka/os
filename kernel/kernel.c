@@ -68,7 +68,7 @@ static void handle_command(char *cmd) {
     put_string("\r\n");
 
     put_string("p2: ");
-    put_hex64((uint64_t)p1);
+    put_hex64((uint64_t)p2);
     put_string("\r\n");
 
     kfree(p1);
@@ -86,6 +86,7 @@ void kernel_main(void) {
     kprintf("booting OS version %d.%d.%d...\r\n", VERSION_MAJOR, VERSION_MINOR,
             VERSION_PATCH);
 
+    kinit();
     vfs_init();
 
     irq_disable();
