@@ -9,11 +9,22 @@
 #define UART_LCRH ((volatile unsigned int *)(UART0_BASE + 0x2C))
 #define UART_CR ((volatile unsigned int *)(UART0_BASE + 0x30))
 #define UART_IMSC ((volatile unsigned int *)(UART0_BASE + 0x38))
+#define UART_MIS ((volatile unsigned int *)(UART0_BASE + 0x40))
 #define UART_ICR ((volatile unsigned int *)(UART0_BASE + 0x44))
 
 #define LINE_BUFFER_SIZE 128
+#define UART_RX_BUFFER_SIZE 256
+#define UART_FR_RXFE (1U << 4)
+#define UART_FR_TXFF (1U << 5)
+#define UART_INT_RX (1U << 4)
+#define UART_INT_RT (1U << 6)
+
+static volatile unsigned int uart_rx_head;
+static volatile unsigned int uart_rx_tail;
+static char uart_rx_buffer[UART_RX_BUFFER_SIZE];
 
 static char uart_getc(void);
+static int uart_rx_pop(char *c);
 static void discard_escape_sequence(void);
 
 void uart_init(void) {
@@ -25,19 +36,62 @@ void uart_init(void) {
   *UART_LCRH = (0x3 << 5);
   *UART_IMSC = 0x0;
   *UART_CR = (1 << 0) | (1 << 8) | (1 << 9);
+
+  uart_rx_head = 0;
+  uart_rx_tail = 0;
+}
+
+void uart_irq_init(void) {
+  *UART_ICR = 0x7FF;
+  *UART_IMSC = UART_INT_RX | UART_INT_RT;
 }
 
 void uart_putc(char c) {
-  while (*UART_FR & (1 << 5)) {
+  while (*UART_FR & UART_FR_TXFF) {
   }
 
   *UART_DR = (uint32_t)c;
 }
 
 static char uart_getc(void) {
-  while (*UART_FR & (1 << 4)) {
+  char c;
+
+  while (!uart_rx_pop(&c)) {
   }
-  return (char)(*UART_DR);
+
+  return c;
+}
+
+static int uart_rx_pop(char *c) {
+  if (uart_rx_head == uart_rx_tail) {
+    return 0;
+  }
+
+  *c = uart_rx_buffer[uart_rx_tail];
+  uart_rx_tail = (uart_rx_tail + 1U) % UART_RX_BUFFER_SIZE;
+  return 1;
+}
+
+void uart_handle_irq(void) {
+  unsigned int mis = *UART_MIS;
+
+  if ((mis & (UART_INT_RX | UART_INT_RT)) == 0) {
+    return;
+  }
+
+  while ((*UART_FR & UART_FR_RXFE) == 0) {
+    unsigned int next_head = (uart_rx_head + 1U) % UART_RX_BUFFER_SIZE;
+    char c = (char)(*UART_DR);
+
+    if (next_head == uart_rx_tail) {
+      break;
+    }
+
+    uart_rx_buffer[uart_rx_head] = c;
+    uart_rx_head = next_head;
+  }
+
+  *UART_ICR = UART_INT_RX | UART_INT_RT;
 }
 
 static void discard_escape_sequence(void) {

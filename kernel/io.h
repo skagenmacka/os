@@ -3,6 +3,8 @@
 #include <stdint.h>
 
 void uart_init(void);
+void uart_irq_init(void);
+void uart_handle_irq(void);
 void uart_putc(char c);
 
 void get_line(char *buf);

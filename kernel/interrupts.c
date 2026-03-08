@@ -131,7 +131,7 @@ void exception_dispatch(struct trap_frame *frame) {
   case VECTOR_CURRENT_SPX_IRQ:
   case VECTOR_LOWER_A64_IRQ:
   case VECTOR_LOWER_A32_IRQ:
-    timer_handle_irq();
+    irq_handle();
     return;
     break;
 
