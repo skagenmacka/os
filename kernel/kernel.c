@@ -1,5 +1,6 @@
 #include <stdint.h>
 
+#include "aarch64.h"
 #include "fs/fs.h"
 #include "fs/vfs.h"
 #include "interrupts.h"
@@ -8,6 +9,8 @@
 
 #include "lib/cmd.h"
 #include "lib/string.h"
+
+#define NCPU 8
 
 #define VERSION_MAJOR 0
 #define VERSION_MINOR 0
@@ -66,16 +69,21 @@ static void handle_command(char *cmd) {
 }
 
 void kernel_main(void) {
-  uart_init();
-  vfs_init();
+  unsigned long id = cpuid();
+  if (id == 0) {
+    // loading output
+    uart_init();
+    kprintf("booting OS version %d.%d.%d...\r\n", VERSION_MAJOR, VERSION_MINOR,
+            VERSION_PATCH);
 
-  irq_disable();
+    vfs_init();
 
-  kprintf("Booting OS version %d.%d.%d...\r\n", VERSION_MAJOR, VERSION_MINOR,
-          VERSION_PATCH);
+    irq_disable();
 
-  timer_init();
-  irq_enable();
+    timer_init();
+
+    irq_enable();
+  }
 
   char line[128];
 
