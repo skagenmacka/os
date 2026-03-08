@@ -18,9 +18,11 @@ void kernel_main(void) {
     put_string("> ");
 
     get_line(line);
+    uart_putc('\r');
 
     put_string("Du skrev: ");
     put_string(line);
+    uart_putc('\r');
     uart_putc('\n');
   }
 }
