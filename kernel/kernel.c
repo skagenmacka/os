@@ -4,6 +4,7 @@
 #include "fs/vfs.h"
 #include "interrupts.h"
 #include "io.h"
+#include "timer.h"
 
 #include "lib/cmd.h"
 #include "lib/string.h"
@@ -32,6 +33,10 @@ static void handle_command(char *cmd) {
   char *argv[4];
   int argc = parse_command(cmd, argv, 4);
 
+  if (argc == 0) {
+    return;
+  }
+
   if (strcmp(argv[0], "echo") == 0) {
     put_string("");
     uart_putc('\r');
@@ -46,6 +51,10 @@ static void handle_command(char *cmd) {
     kprintf("Created path %s with status %d\r\n", argv[1], s);
   } else if (strcmp(argv[0], "ls") == 0) {
     cmd_ls("/");
+  } else if (strcmp(argv[0], "ticks") == 0) {
+    put_string("ticks: ");
+    put_hex64(timer_get_ticks());
+    put_string("\r\n");
   } else {
     put_string("os: command not found: ");
     uart_putc('\"');
@@ -58,12 +67,14 @@ static void handle_command(char *cmd) {
 
 void kernel_main(void) {
   uart_init();
+  vfs_init();
 
   irq_disable();
 
   kprintf("Booting OS version %d.%d.%d...\r\n", VERSION_MAJOR, VERSION_MINOR,
           VERSION_PATCH);
 
+  timer_init();
   irq_enable();
 
   char line[128];

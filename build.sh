@@ -5,6 +5,7 @@ clang --target=aarch64-none-elf -ffreestanding -mgeneral-regs-only -c boot/boot.
 clang --target=aarch64-none-elf -ffreestanding -mgeneral-regs-only -c kernel/interrupts.S -o build/int.o
 clang --target=aarch64-none-elf -ffreestanding -mgeneral-regs-only -c kernel/kernel.c -o build/kernel.o
 clang --target=aarch64-none-elf -ffreestanding -mgeneral-regs-only -c kernel/io.c -o build/io.o
+clang --target=aarch64-none-elf -ffreestanding -mgeneral-regs-only -c kernel/timer.c -o build/timer.o
 clang --target=aarch64-none-elf -ffreestanding -mgeneral-regs-only -c kernel/lib/string.c -o build/string.o
 clang --target=aarch64-none-elf -ffreestanding -mgeneral-regs-only -c kernel/lib/cmd.c -o build/cmd.o
 clang --target=aarch64-none-elf -ffreestanding -mgeneral-regs-only -c kernel/fs/vfs.c -o build/vfs.o
@@ -14,5 +15,5 @@ clang --target=aarch64-none-elf \
   -fuse-ld=lld \
   -nostdlib \
   -Wl,-T,linker.ld \
-  build/boot.o build/int.o build/kernel.o build/io.o build/string.o build/cmd.o build/vfs.o build/ramfs.o build/interrupts.o \
+  build/boot.o build/int.o build/kernel.o build/io.o build/timer.o build/string.o build/cmd.o build/vfs.o build/ramfs.o build/interrupts.o \
   -o build/kernel.elf

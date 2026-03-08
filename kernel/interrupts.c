@@ -1,5 +1,6 @@
 #include "interrupts.h"
 #include "io.h"
+#include "timer.h"
 
 #define ESR_EC_SHIFT 26U
 #define ESR_EC_MASK 0x3fU
@@ -130,7 +131,8 @@ void exception_dispatch(struct trap_frame *frame) {
   case VECTOR_CURRENT_SPX_IRQ:
   case VECTOR_LOWER_A64_IRQ:
   case VECTOR_LOWER_A32_IRQ:
-    panic_exception(frame, "unhandled irq");
+    timer_handle_irq();
+    return;
     break;
 
   case VECTOR_CURRENT_SP0_FIQ:
