@@ -9,4 +9,4 @@ Kerneln (kärnan) är designad att köras på en virtuell QEMU maskin.
 # Referens
 
 - OSDev Wiki - https://wiki.osdev.org/
-- Xv6 for RISC-V https://github.com/mit-pdos/xv6-riscv
+- Xv6 for RISC-V - https://github.com/mit-pdos/xv6-riscv
